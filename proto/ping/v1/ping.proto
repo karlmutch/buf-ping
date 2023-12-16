@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package dev.karlmutch.ping.v1;
+option go_package = "platform-services/gen/buf-ping/ping/v1;pingv1";
+
+import "google/protobuf/timestamp.proto";
+
+
+service Ping {
+  rpc Ping(PingRequest) returns (PiongResponse);
+  rpc StubOne(stream Request) returns (Response);
+  rpc StubTwo(Request) returns (stream Response);
+  rpc StubeThree(stream Request) returns (stream Response);
+}
