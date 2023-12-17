@@ -1,14 +1,63 @@
 syntax = "proto3";
 
-package dev.karlmutch.ping.v1;
+package ping.v1;
 option go_package = "platform-services/gen/buf-ping/ping/v1;pingv1";
 
 import "google/protobuf/timestamp.proto";
 
+message PingRequest {
+}
 
-service Ping {
-  rpc Ping(PingRequest) returns (PiongResponse);
-  rpc StubOne(stream Request) returns (Response);
-  rpc StubTwo(Request) returns (stream Response);
-  rpc StubeThree(stream Request) returns (stream Response);
+message PingResponse {
+  int32 sum = 1;
+  google.protobuf.Timestamp timestamp = 2;
+}
+
+message SumRequest {
+  int32 addition = 1;
+}
+
+message SumResponse {
+  int32 sum = 1;
+}
+
+message GenerateRequest {
+  int32 addition = 1;
+}
+
+message GenerateResponse {
+  int32 progress = 1;
+}
+
+message CountRequest {
+  int32 addition = 1;
+}
+
+message CountResponse {
+  int32 sum = 1;
+}
+
+message HardFailRequest {
+  int32 failure_code = 1;
+}
+
+message HardFailResponse {}
+
+service PingService {
+  // Ping is unary RPC function that returns the current counter within the server and a timestamp
+  rpc Ping(PingRequest) returns (PingResponse);
+
+  // Sum is a client streaming RPC function that returns the current counter after the sum requests have
+  // been received from the client
+  rpc Sum(stream SumRequest) returns (SumResponse);
+
+  // Generate is a server streaming RPC function that returns incremental results as a stream of individual increments
+  // to the running sum on the server
+  rpc Generate(GenerateRequest) returns (stream GenerateResponse);
+
+  // Count is a bidirectional streaming RPC function that returns incremental results from the a stream of individual increments
+  rpc Count(stream CountRequest) returns (stream CountResponse);
+
+  // HardFail is a hard wired failing rpc
+  rpc HardFail(HardFailRequest) returns (HardFailResponse);
 }
