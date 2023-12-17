@@ -98,9 +98,10 @@ func (server *PingServer) Count(ctx context.Context, stream *connect.BidiStream[
 
 }
 
-func (server *PingServer) HardFailure(ctx context.Context, req *connect.Request[pingv1.HardFailureRequest],
-) (resp *connect.Response[pingv1.HardFailureResponse], err error) {
-	resp = connect.NewResponse(&pingv1.HardFailureResponse{})
-	err = connect.NewError(connect.Code(req.Msg.Code), kv.NewError("intentional failure").With("stack", stack.Trace().TrimRuntime()))
+// HardFail generates an error and returns it to the client when invoked
+func (server *PingServer) HardFail(ctx context.Context, req *connect.Request[pingv1.HardFailRequest],
+) (resp *connect.Response[pingv1.HardFailResponse], err error) {
+	resp = connect.NewResponse(&pingv1.HardFailResponse{})
+	err = connect.NewError(connect.Code(req.Msg.FailureCode), kv.NewError("intentional failure").With("stack", stack.Trace().TrimRuntime()))
 	return resp, err
 }
