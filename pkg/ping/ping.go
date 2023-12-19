@@ -20,7 +20,7 @@ import (
 // PingServer is used to encapsulate a Ping Server implementation state using connectrpc receivers
 type PingServer struct {
 	logger slog.Logger
-	total  *atomic.Int32
+	total  int32
 	sync.Mutex
 }
 
@@ -34,10 +34,10 @@ func (server *PingServer) Ping(ctx context.Context, req *connect.Request[pingv1.
 ) (resp *connect.Response[pingv1.PingResponse], err error) {
 
 	respMsg := &pingv1.PingResponse{
-		Sum: server.total.Load(),
+		Sum: atomic.LoadInt32(&server.total),
 		Timestamp: &timestamppb.Timestamp{
 			Seconds: time.Now().Unix(),
-			Nanos:   int32(time.Now().UnixNano()),
+			Nanos:   int32(time.Now().Nanosecond()),
 		},
 	}
 	resp = connect.NewResponse(respMsg)
@@ -50,14 +50,14 @@ func (server *PingServer) Sum(ctx context.Context, reqStream *connect.ClientStre
 ) (resp *connect.Response[pingv1.SumResponse], err error) {
 
 	for reqStream.Receive() {
-		server.total.Add(reqStream.Msg().Addition)
+		atomic.AddInt32(&server.total, reqStream.Msg().Addition)
 	}
 	if reqStream.Err() != nil {
 		return nil, reqStream.Err()
 	}
 
 	resp = connect.NewResponse(&pingv1.SumResponse{
-		Sum: server.total.Load(),
+		Sum: atomic.LoadInt32(&server.total),
 	})
 	return resp, nil
 }
@@ -67,9 +67,9 @@ func (server *PingServer) Generate(ctx context.Context, req *connect.Request[pin
 	respStream *connect.ServerStream[pingv1.GenerateResponse]) (err error) {
 
 	for i := int64(0); i < int64(req.Msg.Addition); i++ {
-		server.total.Add(1)
+		atomic.AddInt32(&server.total, 1)
 		errGo := respStream.Send(&pingv1.GenerateResponse{
-			Progress: server.total.Load(),
+			Progress: atomic.LoadInt32(&server.total),
 		})
 		if errGo != nil {
 			return errGo
@@ -89,7 +89,7 @@ func (server *PingServer) Count(ctx context.Context, stream *connect.BidiStream[
 			return errGo
 		}
 		for i := int32(0); i != msg.Addition; i++ {
-			resp := &pingv1.CountResponse{Sum: server.total.Add(1)}
+			resp := &pingv1.CountResponse{Sum: atomic.AddInt32(&server.total, 1)}
 			if errGo := stream.Send(resp); errGo != nil {
 				return errGo
 			}
