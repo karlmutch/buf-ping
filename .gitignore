@@ -21,3 +21,5 @@
 go.work
 
 cmd/pingsrv/pingsrv
+testing.crt
+testing.key

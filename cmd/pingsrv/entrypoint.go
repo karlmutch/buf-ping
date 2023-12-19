@@ -56,6 +56,17 @@ func EntryPoint(ctx context.Context, opts *serverOpts) (errs []kv.Error) {
 		opts.cooldown = time.Duration(2 * time.Second)
 	}
 
+	if len(opts.ipPort) == 0 {
+		opts.ipPort = "0.0.0.0:8080"
+	}
+
+	if len(opts.certPemFn) == 0 {
+		opts.certPemFn = "testing.crt"
+	}
+	if len(opts.certKeyFn) == 0 {
+		opts.certKeyFn = "testing.key"
+	}
+
 	opts.logger.Info("starting", "revision", runtime.BuildInfo.ShortRevision, "go", runtime.BuildInfo.GoVersion, "platform", runtime.BuildInfo.OS+"/"+runtime.BuildInfo.Arch)
 
 	// Start supervisor channel for the main server goroutine
@@ -128,11 +139,28 @@ func processMonitor(ctx context.Context, cancel context.CancelFunc, opts *server
 				if err != nil {
 					opts.logger.Warn(err.Error())
 				}
+				opts.logger.Info("server shutdown due to fatal error")
+
+				defer func() {
+					_ = recover()
+				}()
+				if killC != nil {
+					close(killC)
+				}
+				return
 			case <-ctx.Done():
-				defer close(killC)
+				defer func() {
+					_ = recover()
+				}()
+				if killC != nil {
+					close(killC)
+				}
 				return
 			case <-killC:
-				defer cancel()
+				defer func() {
+					_ = recover()
+				}()
+				cancel()
 				return
 			}
 		}
