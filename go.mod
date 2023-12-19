@@ -8,6 +8,7 @@ require (
 	connectrpc.com/connect v1.13.0
 	connectrpc.com/grpchealth v1.3.0
 	connectrpc.com/grpcreflect v1.2.0
+	connectrpc.com/otelconnect v0.6.0
 	github.com/go-stack/stack v1.8.1
 	github.com/karlmutch/kv v0.8.2
 	github.com/rs/cors v1.10.1

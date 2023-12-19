@@ -18,15 +18,20 @@ openssl req -newkey ec:<(openssl ecparam -name secp384r1) -nodes -keyout testing
 
 For manual testing the grpcurl utility is used and can be obtained from https://github.com/fullstorydev/grpcurl/releases.
 
+OpenTelemetry is sent to the HoneyComb OTel platform.  Ypu can sign up for a free account at honeycomb.io and then access your account to create an API key. The environment can then be configured as follows:
+
 ```sh
+export OTEL_SERVICE_NAME="ping-test-service"
+export HONEYCOMB_API_KEY="your-api-key"
+
 go run ./cmd/pingsrv/.
 ```
 
 ```sh
-$ grpcurl --insecure -H "authorization: Bearer $AUTH0_TOKEN" localhost:$PORT list
+$ grpcurl --insecure -H "authorization: Bearer $ACCESS_TOKEN" localhost:$PORT list
 ping.v1.PingService
 # Below is the secure variant when using self signed certificates
-$ grpcurl --cacert testing.crt -H "authorization: Bearer $AUTH0_TOKEN" localhost:8080 describe
+$ grpcurl --cacert testing.crt -H "authorization: Bearer $ACCESS_TOKEN" localhost:8080 describe
 ping.v1.PingService is a service:
 service PingService {
   rpc Count ( stream .ping.v1.CountRequest ) returns ( stream .ping.v1.CountResponse );
@@ -39,30 +44,43 @@ service PingService {
 
 ```sh
 # Zero values for the the sum at this are 0 which is the default value and will not be serialized on the wire
-$ grpcurl --insecure -H "authorization: Bearer $AUTH0_TOKEN" -d '{}' localhost:8080 ping.v1.PingService/Ping
+$ grpcurl --insecure -H "authorization: Bearer $ACCESS_TOKEN" -d '{}' localhost:8080 ping.v1.PingService/Ping
 {
   "timestamp": "2023-12-19T19:24:03.432490224Z"
 }
-$ grpcurl --insecure -H "authorization: Bearer $AUTH0_TOKEN" -d '{"addition":"1"}{"addition":"1"}' localhost:8080 ping.v1.PingService/Count
+$ grpcurl --insecure -H "authorization: Bearer $ACCESS_TOKEN" -d '{"addition":"1"}{"addition":"1"}' localhost:8080 ping.v1.PingService/Count
 {
   "sum": 1
 }
 {
   "sum": 2
 }
-$ grpcurl --insecure -H "authorization: Bearer $AUTH0_TOKEN" -d '{"addition":"1"}{"addition":"1"}' localhost:8080 ping.v1.PingService/Sum
+$ grpcurl --insecure -H "authorization: Bearer $ACCESS_TOKEN" -d '{"addition":"1"}{"addition":"1"}' localhost:8080 ping.v1.PingService/Sum
 {
   "sum": 4
 }
-$ grpcurl --insecure -H "authorization: Bearer $AUTH0_TOKEN" -d '{"addition":"1"}' localhost:8080 ping.v1.PingService/Generate
+$ grpcurl --insecure -H "authorization: Bearer $ACCESS_TOKEN" -d '{"addition":"1"}' localhost:8080 ping.v1.PingService/Generate
 {
   "progress": 5
 }
-$ grpcurl --insecure -H "authorization: Bearer $AUTH0_TOKEN" -d '{"addition":"2"}' localhost:8080 ping.v1.PingService/Generate
+$ grpcurl --insecure -H "authorization: Bearer $ACCESS_TOKEN" -d '{"addition":"2"}' localhost:8080 ping.v1.PingService/Generate
 {
   "progress": 6
 }
 {
   "progress": 7
+}
+```
+
+```sh
+grpcurl --insecure -H "authorization: Bearer $ACCESS_TOKEN" localhost:8080 describe grpc.health.v1.Health
+grpc.health.v1.Health is a service:
+service Health {
+  rpc Check ( .grpc.health.v1.HealthCheckRequest ) returns ( .grpc.health.v1.HealthCheckResponse );
+  rpc Watch ( .grpc.health.v1.HealthCheckRequest ) returns ( stream .grpc.health.v1.HealthCheckResponse );
+}
+$ grpcurl --insecure -H "authorization: Bearer $ACCESS_TOKEN" localhost:8080 grpc.health.v1.Health/Check
+{
+  "status": "SERVING"
 }
 ```

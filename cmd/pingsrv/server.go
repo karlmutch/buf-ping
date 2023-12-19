@@ -9,6 +9,7 @@ import (
 	"connectrpc.com/connect"
 	"connectrpc.com/grpchealth"
 	"connectrpc.com/grpcreflect"
+	"connectrpc.com/otelconnect"
 
 	"github.com/go-stack/stack"
 	"github.com/rs/cors"
@@ -74,11 +75,17 @@ func newTLSConfig() (tlsConfig *tls.Config) {
 func startServer(ctx context.Context, opts *serverOpts, comps *components.Components) (err kv.Error) {
 
 	pingServer := ping.NewPingServer(*opts.logger)
-	mux := http.NewServeMux()
 
 	compress1KB := connect.WithCompressMinBytes(1024)
-	interceptors := connect.WithInterceptors()
 
+	// otelconnect.NewInterceptor provides an interceptor that adds tracing and
+	// metrics to both clients and handlers. By default, it uses OpenTelemetry's
+	// global TracerProvider and MeterProvider, which you can configure by
+	// following the OpenTelemetry documentation.
+	interceptors := connect.WithInterceptors(otelconnect.NewInterceptor())
+
+	// Combine everything into a single handler for nthe ping service route
+	mux := http.NewServeMux()
 	mux.Handle(pingv1connect.NewPingServiceHandler(pingServer, interceptors, compress1KB))
 
 	// For more information please see, https://github.com/bufbuild/connect-grpchealth-go
@@ -88,7 +95,7 @@ func startServer(ctx context.Context, opts *serverOpts, comps *components.Compon
 	// Function that is used to add a grpc static checker to the connect grpchealth instance
 	AddStaticChecker(ctx, pingv1connect.PingServiceName)
 
-	// Reflection requires authentication checking
+	// Reflection will use authentication
 	mux.Handle(grpcreflect.NewHandlerV1(
 		grpcreflect.NewStaticReflector(pingv1connect.PingServiceName),
 		compress1KB,

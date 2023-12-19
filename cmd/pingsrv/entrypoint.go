@@ -38,7 +38,6 @@ type serverOpts struct {
 	prometheusRefresh time.Duration
 
 	o11yKey string
-	o11yDS  string
 
 	cooldown time.Duration
 	startedC chan any
@@ -65,6 +64,10 @@ func EntryPoint(ctx context.Context, opts *serverOpts) (errs []kv.Error) {
 	}
 	if len(opts.certKeyFn) == 0 {
 		opts.certKeyFn = "testing.key"
+	}
+
+	if len(opts.o11yKey) == 0 {
+		opts.o11yKey = os.Getenv("HONEYCOMB_API_KEY")
 	}
 
 	opts.logger.Info("starting", "revision", runtime.BuildInfo.ShortRevision, "go", runtime.BuildInfo.GoVersion, "platform", runtime.BuildInfo.OS+"/"+runtime.BuildInfo.Arch)
@@ -179,12 +182,7 @@ func startServices(ctx context.Context, opts *serverOpts, statusC chan []string,
 		return err.With("stack", stack.Trace().TrimRuntime())
 	}
 
-	var (
-		span   trace.Span
-		tracer trace.Tracer
-	)
-
-	if len(opts.o11yKey) != 0 && len(opts.o11yDS) != 0 {
+	if len(opts.o11yKey) != 0 {
 		bag := baggage.FromContext(ctx)
 
 		otelOpts := server.StartTelemetryOpts{
@@ -192,8 +190,6 @@ func startServices(ctx context.Context, opts *serverOpts, statusC chan []string,
 			ServiceName: opts.serviceID,
 			ProjectID:   runtime.BuildInfo.ProjectPath,
 			ApiKey:      opts.o11yKey,
-			Dataset:     opts.o11yDS,
-			ApiEndpoint: opts.cfgHost,
 			Cooldown:    opts.cooldown,
 			Bag:         &bag,
 		}
@@ -217,17 +213,19 @@ func startServices(ctx context.Context, opts *serverOpts, statusC chan []string,
 			}
 		}
 
+		ctx = baggage.ContextWithBaggage(ctx, bag)
+
+		// StartTelemetry will initialize the OpenTelemetry globals for the
+		// TraceProvider, MetricsProvider, and TextMapPropagator
 		ctx, err = server.StartTelemetry(ctx, otelOpts, *opts.logger)
 		if err != nil {
 			opts.logger.Warn(err.Error())
 		}
-
-		ctx = baggage.ContextWithBaggage(ctx, bag)
 	}
 
 	// Create a server span to cover our dependencies, general processing and provisioned interfaces
-	tracer = otel.GetTracerProvider().Tracer(runtime.BuildInfo.ProjectPath)
-	span = trace.SpanFromContext(ctx)
+	tracer := otel.GetTracerProvider().Tracer(runtime.BuildInfo.ProjectPath)
+	span := trace.SpanFromContext(ctx)
 
 	// Initialize a component monitor (poor mans supervisor) to allow health checking to be implemented
 	// across all dependencies and internal components
