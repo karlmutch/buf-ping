@@ -15,6 +15,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/go-stack/stack"
+	"github.com/karlmutch/go-service/pkg/components"
 	"github.com/karlmutch/go-service/pkg/runtime"
 	"github.com/karlmutch/go-service/pkg/server"
 
@@ -25,18 +26,25 @@ type serverOpts struct {
 	serviceID string
 	cfgHost   string
 
+	ipPort string
+
+	certPemFn string
+	certKeyFn string
+
 	cfgNamespace string
 	cfgConfigMap string
 
 	prometheusAddr    string
 	prometheusRefresh time.Duration
 
-	o11yKey  string
-	o11yDS   string
-	o11yHost string
+	o11yKey string
+	o11yDS  string
 
 	cooldown time.Duration
 	startedC chan any
+
+	errorC  chan kv.Error
+	statusC chan []string
 
 	logger *slog.Logger
 }
@@ -60,12 +68,12 @@ func EntryPoint(ctx context.Context, opts *serverOpts) (errs []kv.Error) {
 		cancel()
 	}()
 
-	errorC, statusC := processMonitor(ctx, cancel, opts)
+	opts.errorC, opts.statusC = processMonitor(ctx, cancel, opts)
 
 	// Monitoring of cluster state etc
 	clusterMonitor := make(chan struct{}, 1)
 	refreshState := time.Duration(15 * time.Second)
-	go server.InitiateK8s(ctx, opts.cfgNamespace, opts.cfgConfigMap, clusterMonitor, refreshState, *opts.logger, errorC)
+	go server.InitiateK8s(ctx, opts.cfgNamespace, opts.cfgConfigMap, clusterMonitor, refreshState, *opts.logger, opts.errorC)
 	select {
 	case <-clusterMonitor:
 		opts.logger.Debug("kubernetes monitoring active")
@@ -75,7 +83,7 @@ func EntryPoint(ctx context.Context, opts *serverOpts) (errs []kv.Error) {
 		return
 	}
 
-	if err := startServices(ctx, opts, statusC, errorC); err != nil {
+	if err := startServices(ctx, opts, opts.statusC, opts.errorC); err != nil {
 		return []kv.Error{err}
 	}
 
@@ -193,7 +201,15 @@ func startServices(ctx context.Context, opts *serverOpts, statusC chan []string,
 	tracer = otel.GetTracerProvider().Tracer(runtime.BuildInfo.ProjectPath)
 	span = trace.SpanFromContext(ctx)
 
-	// TODO Start the component supervisor, health monitor goroutine and then start the main server goroutine
+	// Initialize a component monitor (poor mans supervisor) to allow health checking to be implemented
+	// across all dependencies and internal components
+	comps := components.InitComponentTracking(ctx)
+	initHealthMonitoring(ctx, opts.serviceID, comps, opts.logger)
+
+	// Start the main server goroutine
+	if err = startServer(ctx, opts, comps); err != nil {
+		return err
+	}
 
 	if span != nil {
 		ctx, span := tracer.Start(ctx, "local dependencies")
