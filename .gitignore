@@ -20,7 +20,15 @@
 # Go workspace file
 go.work
 
+# Binary from local builds by developers
 cmd/pingsrv/pingsrv
+
+# Testing certificates for OpenSSL/TLS 1.3
 testing.crt
 testing.key
+
+# Developer local setup scripts for the direnv tool
 .envrc
+
+# Dagger build output directory
+build/

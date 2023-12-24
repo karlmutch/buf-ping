@@ -3,22 +3,38 @@ module github.com/karlmutch/buf-ping
 go 1.21.5
 
 require (
-	buf.build/gen/go/karlmutch/buf-ping/connectrpc/go v1.13.0-20231217213350-15c716c6ede5.1
-	buf.build/gen/go/karlmutch/buf-ping/protocolbuffers/go v1.31.0-20231217213350-15c716c6ede5.2
-	connectrpc.com/connect v1.13.0
+	buf.build/gen/go/karlmutch/buf-ping/connectrpc/go v1.14.0-20231217213350-15c716c6ede5.1
+	buf.build/gen/go/karlmutch/buf-ping/protocolbuffers/go v1.32.0-20231217213350-15c716c6ede5.1
+	connectrpc.com/connect v1.14.0
 	connectrpc.com/grpchealth v1.3.0
 	connectrpc.com/grpcreflect v1.2.0
 	connectrpc.com/otelconnect v0.6.0
+	dagger.io/dagger v0.9.5
+	github.com/containerd/containerd v1.7.11
 	github.com/go-stack/stack v1.8.1
 	github.com/karlmutch/kv v0.8.2
 	github.com/rs/cors v1.10.1
 	github.com/shirou/gopsutil/v3 v3.23.11
 	go.opentelemetry.io/otel v1.21.0
 	go.opentelemetry.io/otel/trace v1.21.0
-	google.golang.org/protobuf v1.31.0
+	google.golang.org/protobuf v1.32.0
 )
 
-require go.opentelemetry.io/otel/sdk/metric v1.21.0 // indirect
+require (
+	github.com/99designs/gqlgen v0.17.31 // indirect
+	github.com/Khan/genqlient v0.6.0 // indirect
+	github.com/Microsoft/hcsshim v0.11.4 // indirect
+	github.com/adrg/xdg v0.4.0 // indirect
+	github.com/containerd/log v0.1.0 // indirect
+	github.com/mitchellh/go-homedir v1.1.0 // indirect
+	github.com/opencontainers/go-digest v1.0.0 // indirect
+	github.com/opencontainers/image-spec v1.1.0-rc2.0.20221005185240-3a7f492d3f1b // indirect
+	github.com/sirupsen/logrus v1.9.3 // indirect
+	github.com/vektah/gqlparser/v2 v2.5.6 // indirect
+	go.opentelemetry.io/otel/sdk/metric v1.21.0 // indirect
+	golang.org/x/exp v0.0.0-20231006140011-7918f672742d // indirect
+	golang.org/x/sync v0.4.0 // indirect
+)
 
 require (
 	github.com/beorn7/perks v1.0.1 // indirect

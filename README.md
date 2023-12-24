@@ -1,12 +1,48 @@
 # buf-ping
 
-A server and client using CNCF connectrpc with Auth, OTel, BSR, http interceptor examples also included.
+A server and client using CNCF connectrpc with Auth, [OpenTelemetry](https://opentelemetry.io), [gRPC Schemas BSR](https://buf.build).
 
-Builds will be done using dagger.io.
+The client and server are designed to show the four different types of gRPC message exchanges, unary, server streaming, client streaming, and bidirectional streaming.
+
+## Building and build dependencies
+
+Builds and tests (CI/CD) are done using dagger.io.  Dagger can be downloaded from the installation instructions at [Dagger Install](docs.dagger.io/cli).
+
+Additional tooling that is useful for build activities include [jq](https://github.com/jqlang/jq), and access to a docker runtime such as [docker](https://docker.com), or our recommended platform for OSX [OrbStack](https://orbstack.dev).
+
+When using an orbstack Linux VM and dagger together the docker command will need to be started using a script, for example:
+
+```sh
+# Replying to https://discord.com/channels/707636530424053791/1123687185837740053/1186907997532868618
+#
+# Hi Karl, we are working on a feature to customize how to run the engine container. In the meantime you could add a shell script called 
+# `docker` in your shell’s search path:
+#
+cat > ~/.local/bin/docker <<‘EOF’
+#!/bin/sh
+mac docker $*
+EOF
+chmod +x ~/.local/bin/docker
+```
+
+OrbStack should also have its Docker configuration modified to support IPv6 by using the Settings menu item.
+
+```sh
+    "insecure-registries" : [ "registry.orb.local:5000" ]
+```
+
+The reference builds are done using the dagger.io engine, as shown in the following example.
+
+```sh
+docker run -d -p 5000:5000 --restart=always --name registry registry:2
+dagger run go run ci/main.go
+```
+
+The dagger based build will cache between builds result in fresh builds taking 30 seconds per executable produced and 5 seconds once the cache is populated.
 
 ## Runtime Dependencies
 
-This example project is implemented as a production server and requires a TLS certificate to work properly.  The code is designed to emulate production code and not skip encryption etc and other steps that variopus styles of testing omit.
+This example project is implemented as a production server and requires a TLS certificate to work properly.  The code is designed to emulate production code and not skip encryption etc and other steps that various styles of testing omit.
 
 If you are testing then the following instructions can be used to create your own self signed certificate files.  For production cloud scenarios you should create a cloud provider signed certificate.  The following example creates two files, 'testing.key', and 'testing.crt' for use when running the server and client.
 
@@ -16,14 +52,18 @@ openssl req -newkey ec:<(openssl ecparam -name secp384r1) -nodes -keyout testing
 
 ## Testing
 
-For manual testing the grpcurl utility is used and can be obtained from https://github.com/fullstorydev/grpcurl/releases.
+For manual testing the grpcurl utility is used and can be obtained from <https://github.com/fullstorydev/grpcurl/releases>.
 
-OpenTelemetry is sent to the HoneyComb OTel platform.  Ypu can sign up for a free account at honeycomb.io and then access your account to create an API key. The environment can then be configured as follows:
+OpenTelemetry is sent to the HoneyComb OTel platform.  You can sign up for a free account at honeycomb.io and then access your account to create an API key. The environment can then be configured as follows:
 
 ```sh
 export OTEL_SERVICE_NAME="ping-test-service"
 export HONEYCOMB_API_KEY="your-api-key"
+```
 
+Additional information concerning OpenTelemetry can be found at [OTel General SDK configuration](https://opentelemetry.io/docs/specs/otel/configuration/sdk-environment-variables/#general-sdk-configuration).
+
+```sh
 go run ./cmd/pingsrv/.
 ```
 
