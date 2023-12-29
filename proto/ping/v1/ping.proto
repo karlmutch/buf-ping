@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 package ping.v1;
-option go_package = "platform-services/gen/buf-ping/ping/v1;pingv1";
+option go_package = "bufping/gen/bufping/ping/v1;pingv1";
 
 import "google/protobuf/timestamp.proto";
 

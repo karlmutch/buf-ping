@@ -1,0 +1,29 @@
+[tool.poetry]
+name = "pingpy"
+version = "0.1.0"
+description = ""
+authors = ["Karl Mutch <karlmutch@users.noreply.github.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+grpcio = "^1.60.0"
+grpcio-tools = "^1.60.0"
+karlmutch-bufping-protocolbuffers-pyi = "^25.1.0.1.20231229050933+b509c9ffe968"
+karlmutch-bufping-grpc-python = "^1.60.0.1.20231229050933+b509c9ffe968"
+karlmutch-bufping-protocolbuffers-python = "^25.1.0.1.20231229050933+b509c9ffe968"
+
+
+[[tool.poetry.source]]
+name = "buf.build"
+url = "https://buf.build/gen/python"
+priority = "primary"
+
+
+[[tool.poetry.source]]
+name = "PyPI"
+priority = "primary"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

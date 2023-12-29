@@ -1,5 +1,5 @@
 version: v1
-name: buf.build/karlmutch/buf-ping
+name: buf.build/karlmutch/bufping
 deps:
   - buf.build/googleapis/googleapis
 breaking:
