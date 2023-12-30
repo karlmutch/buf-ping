@@ -34,9 +34,22 @@ def sum(stub):
 def generate(stub):
     print("Executing generate")
 
+    response_iterator = stub.Generate(protobufs.GenerateRequest(addition=6))
+
+    for response in response_iterator:
+        print("Received incremental sum: {}".format(response.progress))
+
+
+def generate_stream():
+    for msg in iter([protobufs.CountRequest(addition=1)] * 6):
+        yield msg
+
 
 def count(stub):
     print("Executing count")
+
+    for response in stub.Count(generate_stream()):
+        print("Received incremental sum: {}".format(response.sum))
 
 
 def hardfail(stub):
@@ -61,6 +74,8 @@ def main():
             sum(stub)
         elif args.action == 'generate':
             generate(stub)
+        elif args.action == 'count':
+            count(stub)
         elif args.action == 'hardfail':
             hardfail(stub)
 
