@@ -32,3 +32,5 @@ testing.key
 
 # Dagger build output directory
 build/
+cmd/pingpy/.venv/
+tmp/

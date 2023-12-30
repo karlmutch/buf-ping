@@ -12,30 +12,34 @@ def open_secure_grpc_channel(cert_file, server_address):
     return grpc.secure_channel(target=server_address, credentials=creds)
 
 
-def ping():
+def ping(stub):
     print("Executing ping")
-    # Open a gRPC channel to localhost on port 50051
-    with open_secure_grpc_channel('../../testing.crt', 'localhost:8080') as channel:
-        # Create a gRPC stub from the channel
-        stub = grpc_interface.PingServiceStub(channel)
-        # Make a Ping RPC call with 'Hello, Server!' message
-        response = stub.Ping(protobufs.PingRequest())
-        print('Server responded:', response)  # Print server's response
+    # Make a Ping RPC call with 'Hello, Server!' message
+    response = stub.Ping(protobufs.PingRequest())
+    print('Server responded:', response)  # Print server's response
 
 
-def sum():
+def sum(stub):
     print("Executing sum")
 
+    # Open a stream to the server, written using phind-codellama:34b-v2
+    response_iterator = stub.Sum.future(
+        iter([protobufs.SumRequest(addition=1)] * 6))
 
-def generate():
+    # Wait for the response and get the sum value
+    response = response_iterator.result()
+    print("Received sum: {}".format(response.sum))
+
+
+def generate(stub):
     print("Executing generate")
 
 
-def count():
+def count(stub):
     print("Executing count")
 
 
-def hardfail():
+def hardfail(stub):
     print("Executing hardfail")
 
 
@@ -46,14 +50,19 @@ def main():
 
     args = parser.parse_args()
 
-    if args.action == 'ping':
-        ping()
-    elif args.action == 'sum':
-        sum()
-    elif args.action == 'generate':
-        generate()
-    elif args.action == 'hardfail':
-        hardfail()
+    hostPort = 'localhost:8080'
+    with open_secure_grpc_channel('../../testing.crt', hostPort) as channel:
+        # Create a gRPC stub from the channel
+        stub = grpc_interface.PingServiceStub(channel)
+
+        if args.action == 'ping':
+            ping(stub)
+        elif args.action == 'sum':
+            sum(stub)
+        elif args.action == 'generate':
+            generate(stub)
+        elif args.action == 'hardfail':
+            hardfail(stub)
 
 
 if __name__ == '__main__':
