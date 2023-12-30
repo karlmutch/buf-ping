@@ -3,6 +3,8 @@
 This project contains a CLI interface for illustraiting the code needed to connect to
 the buf-ping server and perform all of the operations supported by the server.
 
+To learn more about python and gRPC please refer to [gRPC and Python](https://grpc.io/docs/languages/python/).
+
 ## Build
 
 ### Python Builder
