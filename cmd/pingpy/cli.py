@@ -1,9 +1,15 @@
 import argparse
-import ssl
+import logging
 
 import grpc
 import ping.v1.ping_pb2 as protobufs
 import ping.v1.ping_pb2_grpc as grpc_interface
+from opentelemetry import trace
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import \
+    OTLPSpanExporter
+from opentelemetry.instrumentation.grpc import GrpcInstrumentorClient
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
 
 def open_secure_grpc_channel(cert_file, server_address):
@@ -63,6 +69,14 @@ def main():
 
     args = parser.parse_args()
 
+    trace.set_tracer_provider(TracerProvider())
+    trace.get_tracer_provider().add_span_processor(
+        BatchSpanProcessor(OTLPSpanExporter(insecure=True))
+    )
+
+    grpc_client_instrumentor = GrpcInstrumentorClient()
+    grpc_client_instrumentor.instrument()
+
     hostPort = 'localhost:8080'
     with open_secure_grpc_channel('../../testing.crt', hostPort) as channel:
         # Create a gRPC stub from the channel
@@ -81,4 +95,6 @@ def main():
 
 
 if __name__ == '__main__':
+    logging.basicConfig()
+
     main()

@@ -42,12 +42,69 @@ The dagger based build will cache between builds result in fresh builds taking 3
 
 ## Runtime Dependencies
 
+### TLS Configuration
+
 This example project is implemented as a production server and requires a TLS certificate to work properly.  The code is designed to emulate production code and not skip encryption etc and other steps that various styles of testing omit.
 
 If you are testing then the following instructions can be used to create your own self signed certificate files.  For production cloud scenarios you should create a cloud provider signed certificate.  The following example creates two files, 'testing.key', and 'testing.crt' for use when running the server and client.
 
 ```sh
 openssl req -newkey ec:<(openssl ecparam -name secp384r1) -nodes -keyout testing.key -x509 -days 180 -out testing.crt -subj '/C=US/ST=CA/L=Sonoma/O=Karl Mutch, INC/OU=Org' -addext 'subjectAltName=DNS:localhost,IP:127.0.0.1'
+```
+
+### OpenTelemetry Configuration
+
+```sh
+cat <<EOF >/tmp/otel-collector-config.yaml
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        include_metadata: true
+processors:
+  batch:
+    metadata_keys:
+      - x-honeycomb-dataset
+    metadata_cardinality_limit: 30
+extensions:
+  headers_setter:
+    headers:
+      - action: upsert
+        key: x-honeycomb-dataset
+        from_context: x-honeycomb-dataset
+service:
+  extensions:
+    [ headers_setter ]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      exporters: [otlp]
+      processors: [batch]
+    metrics:
+      receivers: [otlp]
+      exporters: [otlp]
+      processors: [batch]
+    logs:
+      receivers: [otlp]
+      exporters: [otlp]
+      processors: [batch]
+exporters:
+  otlp:
+    endpoint: api.honeycomb.io:443
+    headers:
+      x-honeycomb-team: kKIqI75KnriUfC5nnJTeBM
+    auth:
+      authenticator: headers_setter
+EOF
+# If you are using OrbStack and invoking these commands from a Linux VM you will
+# need to add the following command
+#
+# cp /tmp/otel-collector-config.yaml /mnt/mac/tmp/.
+#
+docker run --name otel_collector -p 4317:4317 \
+    -v /tmp/otel-collector-config.yaml:/etc/otel-collector-config.yaml \
+    otel/opentelemetry-collector-contrib:latest \
+    --config=/etc/otel-collector-config.yaml
 ```
 
 ## Testing

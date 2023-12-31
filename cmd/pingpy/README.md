@@ -29,12 +29,17 @@ poetry install
 The original project had package sources and implementations added using the following commands:
 
 ```sh
+poetry add opentelemetry-sdk
+poetry add opentelemetry-api
 poetry add grpcio
 poetry add grpcio-tools
+poetry add opentelemetry-instrumentation-grpc
+poetry add opentelemetry-instrumentation-logging
+poetry add opentelemetry-exporter-otlp
 poetry source add buf.build https://buf.build/gen/python'
 ```
 
-More information please see, [Poetry Package Sources](https://python-poetry.org/docs/repositories/#supported-package-sources).
+The packages inside the github version of this project already contains these dependencies. For more information please see, [Poetry Package Sources](https://python-poetry.org/docs/repositories/#supported-package-sources).
 
 The Buf.Buf generated python code was added from the public account karlmutch using:
 
@@ -45,3 +50,10 @@ poetry add karlmutch-bufping-protocolbuffers-python
 ```
 
 If you are using this project with VSCode, please refer to the following project, [Poetry and VSCode](https://www.pythoncheatsheet.org/blog/python-projects-with-poetry-and-vscode-part-1#creating-a-virtual-environment).
+
+```sh
+# Information about host naming can be found at https://docs.orbstack.dev/docker/network#domain-names
+export OTEL_EXPORTER_OTLP_ENDPOINT=http://otel_collector.orb.local:4317/
+# https://www.honeycomb.io/blog/simplify-opentelemetry-pipelines-headers-setter
+export OTEL_EXPORTER_OTLP_HEADERS="x-honeycomb-team=[MY_API_KEY]"
+```

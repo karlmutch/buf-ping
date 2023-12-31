@@ -12,6 +12,12 @@ grpcio-tools = "^1.60.0"
 karlmutch-bufping-protocolbuffers-pyi = "^25.1.0.1.20231229050933+b509c9ffe968"
 karlmutch-bufping-grpc-python = "^1.60.0.1.20231229050933+b509c9ffe968"
 karlmutch-bufping-protocolbuffers-python = "^25.1.0.1.20231229050933+b509c9ffe968"
+opentelemetry-api = "^1.22.0"
+opentelemetry-sdk = "^1.22.0"
+opentelemetry-instrumentation-grpc = "^0.43b0"
+opentelemetry-instrumentation-logging = "^0.43b0"
+opentelemetry-exporter-otlp = "^1.22.0"
+opentelemetry-distro = "^0.43b0"
 
 
 [[tool.poetry.source]]

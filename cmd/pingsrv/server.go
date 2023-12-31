@@ -82,7 +82,7 @@ func startServer(ctx context.Context, opts *serverOpts, comps *components.Compon
 	// metrics to both clients and handlers. By default, it uses OpenTelemetry's
 	// global TracerProvider and MeterProvider, which you can configure by
 	// following the OpenTelemetry documentation.
-	interceptors := connect.WithInterceptors(otelconnect.NewInterceptor())
+	interceptors := connect.WithInterceptors(otelconnect.NewInterceptor(otelconnect.WithTrustRemote()))
 
 	// Combine everything into a single handler for nthe ping service route
 	mux := http.NewServeMux()
