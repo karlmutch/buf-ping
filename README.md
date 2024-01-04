@@ -52,6 +52,63 @@ If you are testing then the following instructions can be used to create your ow
 openssl req -newkey ec:<(openssl ecparam -name secp384r1) -nodes -keyout testing.key -x509 -days 180 -out testing.crt -subj '/C=US/ST=CA/L=Sonoma/O=Karl Mutch, INC/OU=Org' -addext 'subjectAltName=DNS:localhost,IP:127.0.0.1'
 ```
 
+### OpenTelemetry Configuration
+
+This project implements the OpenTelemetry framework for Observability.  It can be configured for use with the Honeycomb framework using the following configuration:
+
+```sh
+cat <<EOF >/tmp/otel-collector-config.yaml
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        include_metadata: true
+processors:
+  batch:
+    metadata_keys:
+      - x-honeycomb-dataset
+    metadata_cardinality_limit: 30
+extensions:
+  headers_setter:
+    headers:
+      - action: upsert
+        key: x-honeycomb-dataset
+        from_context: x-honeycomb-dataset
+service:
+  extensions:
+    [ headers_setter ]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      exporters: [otlp]
+      processors: [batch]
+    metrics:
+      receivers: [otlp]
+      exporters: [otlp]
+      processors: [batch]
+    logs:
+      receivers: [otlp]
+      exporters: [otlp]
+      processors: [batch]
+exporters:
+  otlp:
+    endpoint: api.honeycomb.io:443
+    headers:
+      x-honeycomb-team: [YOUR_API_KEY]
+    auth:
+      authenticator: headers_setter
+EOF
+# If you are using OrbStack and invoking these commands from a Linux VM you will
+# need to add the following command
+#
+# cp /tmp/otel-collector-config.yaml /mnt/mac/tmp/.
+#
+docker run --name otel_collector -p 4317:4317 \
+    -v /tmp/otel-collector-config.yaml:/etc/otel-collector-config.yaml \
+    otel/opentelemetry-collector-contrib:latest \
+    --config=/etc/otel-collector-config.yaml
+```
+
 ## Testing
 
 For manual testing the grpcurl utility is used and can be obtained from <https://github.com/fullstorydev/grpcurl/releases>.

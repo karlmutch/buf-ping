@@ -39,11 +39,17 @@ func main() {
 		}
 	}
 
+	tracer, err := initO11y(ctx)
+	if err != nil {
+		fmt.Println(err.Error())
+		os.Exit(-3)
+	}
 	opts := serverOpts{
 		serviceID:         serverID,
 		logger:            slog.New(slog.NewJSONHandler(os.Stdout, nil)),
 		prometheusRefresh: time.Duration(15 * time.Second),
 		startedC:          make(chan any),
+		otelTracer:        tracer,
 	}
 
 	// func is used to allow for defer's and system wide shutdown when the EntryPoint function exits

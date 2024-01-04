@@ -45,7 +45,8 @@ type serverOpts struct {
 	errorC  chan kv.Error
 	statusC chan []string
 
-	logger *slog.Logger
+	otelTracer trace.Tracer
+	logger     *slog.Logger
 }
 
 // EntryPoint is the common starting point for test and production
